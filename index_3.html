@@ -514,18 +514,36 @@ function playSegment(s){
   rafId = requestAnimationFrame(tick);
 }
 
-function advance(){
-  if(step === 0){
-    step = 1;
-  } else if(step < LAST){
+function hideAllProducts(){
+  document.querySelectorAll('.product-box').forEach(el=>el.classList.remove('vis'));
+}
+
+function goForward(){
+  if(step < LAST){
     step++;
-  } else {
-    return;
+    updateDots();
+    showCopy(SEGMENTS[step].copyId);
+    showProductBox(step);
+    playSegment(step);
   }
-  updateDots();
-  showCopy(SEGMENTS[step].copyId);
-  showProductBox(step);
-  playSegment(step);
+}
+
+function goBack(){
+  if(step > 0){
+    step--;
+    updateDots();
+    showCopy(SEGMENTS[step].copyId);
+    if(step === 0){
+      stopAllVideos();
+      activateLayer('intro');
+      vidIntro.setAttribute('loop','');
+      vidIntro.play().catch(()=>{});
+      hideAllProducts();
+    } else {
+      showProductBox(step);
+      playSegment(step);
+    }
+  }
 }
 
 // WHEEL
@@ -533,29 +551,38 @@ let wheelThrottle = false;
 window.addEventListener('wheel', function(e){
   e.preventDefault();
   if(wheelThrottle) return;
+  wheelThrottle = true;
+  setTimeout(()=>{ wheelThrottle = false; }, 400);
   if(e.deltaY > 0){
-    advance();
-    wheelThrottle = true;
-    setTimeout(()=>{ wheelThrottle=false; }, 350);
+    goForward();
+  } else if(e.deltaY < 0){
+    goBack();
   }
 },{ passive:false });
 
 // TOUCH
-let ty0 = 0;
+let touchStartY = 0;
 window.addEventListener('touchstart', function(e){
-  ty0 = e.touches[0].clientY;
+  touchStartY = e.touches[0].clientY;
   if(!iosReady) iosUnlock();
 },{ passive:true });
 window.addEventListener('touchend', function(e){
-  const dy = ty0 - e.changedTouches[0].clientY;
-  if(dy > 40) advance();
+  const dy = touchStartY - e.changedTouches[0].clientY;
+  if(dy > 40){
+    goForward();
+  } else if(dy < -40){
+    goBack();
+  }
 },{ passive:true });
 
 // KEYBOARD
 window.addEventListener('keydown', function(e){
   if([' ','ArrowDown','ArrowRight','PageDown'].includes(e.key)){
     e.preventDefault();
-    advance();
+    goForward();
+  } else if(['ArrowUp','ArrowLeft','PageUp','Backspace'].includes(e.key)){
+    e.preventDefault();
+    goBack();
   }
 });
 
