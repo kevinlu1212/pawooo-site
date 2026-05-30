@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pawooo* — 让每一次相遇都留下印记</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Noto+Serif+SC:wght@400;700&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --cream:#F5F0E8;
+  --paw:#D4622A;
+  --sand:#C8B89A;
+}
+
+html,body{
+  width:100%;height:100%;
+  overflow:hidden;
+  background:#000;
+  font-family:'Space Grotesk',sans-serif;
+}
+
+/* Step dots (right side) */
+#dots{
+  position:fixed;right:2.5rem;top:50%;transform:translateY(-50%);
+  z-index:100;display:flex;flex-direction:column;gap:10px;
+}
+.dot{
+  width:6px;height:6px;border-radius:50%;
+  background:rgba(245,240,232,0.25);
+  transition:background 0.3s,transform 0.3s;
+}
+.dot.done{background:var(--paw)}
+.dot.active{background:var(--cream);transform:scale(1.5)}
+
+/* Segment progress bar (bottom) */
+#seg-prog-wrap{
+  position:fixed;bottom:0;left:0;width:100%;height:2px;z-index:200;
+  background:rgba(245,240,232,0.1);
+}
+#seg-prog-bar{height:100%;background:var(--paw);width:0%}
+
+/* Playing hint */
+#playing-hint{
+  position:fixed;bottom:1.6rem;left:50%;transform:translateX(-50%);
+  z-index:200;color:rgba(245,240,232,0.3);
+  font-size:0.65rem;letter-spacing:0.16em;text-transform:uppercase;
+  opacity:0;transition:opacity 0.4s;pointer-events:none;
+}
+#playing-hint.show{opacity:1}
+
+/* Scroll cue pulse */
+@keyframes cue-pulse{
+  0%,100%{opacity:0.4;transform:translateY(0)}
+  50%{opacity:0.85;transform:translateY(3px)}
+}
+.scroll-cue{animation:cue-pulse 2s ease-in-out infinite}
+
+/* Fixed video stage */
+#stage{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100vh;
+  z-index:0;
+  overflow:hidden;
+}
+
+/* Video layers */
+.vid-layer{
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:100%;
+  opacity:0;
+  transition:opacity 0.5s ease;
+  pointer-events:none;
+}
+.vid-layer video{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
+}
+.vid-layer.active{opacity:1}
+
+/* Vignettes */
+#vig-radial{
+  position:fixed;top:0;left:0;width:100%;height:100%;z-index:5;
+  pointer-events:none;
+  background:radial-gradient(ellipse at center, transparent 25%, rgba(0,0,0,0.6) 100%);
+}
+#vig-bottom{
+  position:fixed;bottom:0;left:0;width:100%;height:35vh;z-index:5;
+  pointer-events:none;
+  background:linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%);
+}
+
+/* NAV */
+#nav{
+  position:fixed;top:0;left:0;width:100%;z-index:100;
+  padding:2rem 3rem;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.nav-logo{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;
+  color:var(--cream);letter-spacing:-0.03em;text-transform:lowercase;
+}
+.nav-logo span{color:var(--paw)}
+.nav-links{display:flex;gap:2rem}
+.nav-links a{
+  font-size:0.78rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--cream);text-decoration:none;opacity:0.65;
+  font-weight:500;transition:opacity 0.2s;
+}
+.nav-links a:hover{opacity:1}
+
+
+
+/* Copy layer — fixed, full screen */
+#copy-layer{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100vh;
+  z-index:20;
+  pointer-events:none;
+}
+
+/* Individual copy blocks — all absolute, full screen, opacity-controlled */
+.copy-block{
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  padding:6vh 8vw 10vh;
+  opacity:0;
+  transition:opacity 0.55s ease;
+}
+.copy-block.vis{opacity:1}
+
+/* Layout variants */
+.lay-center{justify-content:center;align-items:center;text-align:center}
+.lay-right{align-items:flex-end;text-align:right}
+
+/* Typography */
+.eyebrow{
+  font-size:clamp(0.62rem,1vw,0.8rem);
+  letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--sand);font-weight:500;margin-bottom:1.2rem;
+}
+.ch-tag{
+  display:inline-block;
+  background:var(--paw);color:var(--cream);
+  font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;
+  padding:0.35em 0.9em;font-weight:500;margin-bottom:1.4rem;
+  width:fit-content;
+}
+.big-title{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(4rem,10vw,10rem);
+  line-height:0.88;letter-spacing:-0.05em;text-transform:lowercase;
+  color:var(--cream);
+}
+.big-title .acc{color:var(--paw)}
+.ch-title{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(2.4rem,5.5vw,5.8rem);
+  line-height:0.96;letter-spacing:-0.03em;text-transform:lowercase;
+  color:var(--cream);max-width:16ch;
+}
+.ch-title .hi{color:var(--paw)}
+.sub{
+  font-size:clamp(0.88rem,1.3vw,1.05rem);
+  color:var(--sand);max-width:38ch;
+  margin-top:1.5rem;line-height:1.7;font-weight:300;
+}
+.intro-sub{max-width:32ch}
+.scroll-cue{
+  display:flex;align-items:center;gap:0.8rem;
+  margin-top:2.5rem;color:rgba(245,240,232,0.45);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;
+  width:fit-content;
+}
+.scroll-cue-line{width:36px;height:1px;background:rgba(245,240,232,0.4)}
+
+/* Quote block */
+.quote-block{max-width:820px;text-align:center}
+.q-mark{
+  font-family:'Syne',sans-serif;font-size:5rem;
+  line-height:0.6;color:var(--paw);opacity:0.8;
+  display:block;margin-bottom:0.8rem;
+}
+.q-text{
+  font-family:'Noto Serif SC',serif;font-weight:700;
+  font-size:clamp(1.9rem,4.5vw,4.4rem);
+  color:var(--cream);line-height:1.35;letter-spacing:-0.01em;
+}
+
+/* Outro */
+.outro-label{
+  font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--paw);font-weight:500;margin-bottom:1.4rem;
+}
+.outro-title{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(3rem,8.5vw,8.5rem);
+  line-height:0.9;letter-spacing:-0.05em;text-transform:lowercase;
+  color:var(--cream);
+}
+.outro-title small{
+  font-size:0.5em;color:var(--sand);
+  display:block;margin-top:0.3em;letter-spacing:-0.02em;
+}
+.cta-row{
+  display:flex;gap:1rem;flex-wrap:wrap;
+  margin-top:2.5rem;pointer-events:auto;
+}
+.lay-center .cta-row{justify-content:center}
+.btn-fill{
+  background:var(--paw);color:var(--cream);
+  font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;
+  padding:0.95em 2.4em;font-weight:500;
+  font-family:'Space Grotesk',sans-serif;text-decoration:none;
+  display:inline-block;transition:background 0.2s,transform 0.15s;
+  border:none;cursor:pointer;
+}
+.btn-fill:hover{background:#bc5220;transform:translateY(-1px)}
+.btn-line{
+  background:transparent;color:var(--cream);
+  font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;
+  padding:0.95em 2.4em;font-weight:500;
+  border:1px solid rgba(245,240,232,0.3);
+  font-family:'Space Grotesk',sans-serif;text-decoration:none;
+  display:inline-block;transition:border-color 0.2s,transform 0.15s;cursor:pointer;
+}
+.btn-line:hover{border-color:var(--cream);transform:translateY(-1px)}
+.tags{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:2rem}
+.lay-center .tags{justify-content:center}
+.tag{
+  border:1px solid rgba(245,240,232,0.22);
+  color:rgba(245,240,232,0.5);
+  font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;
+  padding:0.38em 0.95em;font-weight:500;
+}
+
+/* Mobile */
+@media(max-width:768px){
+  #nav{padding:1.5rem 1.5rem}
+  .nav-links{display:none}
+  .copy-block{padding:4vh 5vw 8vh}
+  .lay-right{align-items:flex-start;text-align:left}
+  .lay-right .ch-title{max-width:100%}
+  .big-title{font-size:clamp(3.2rem,15vw,6rem)}
+}
+
+/* Product boxes */
+#product-layer{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100vh;
+  z-index:15;
+  pointer-events:none;
+}
+.product-box{
+  position:absolute;
+  top:50%;left:50%;
+  width:260px;height:260px;
+  transform:translate(-50%,-50%);
+  opacity:0;
+  transition:opacity 0.5s ease;
+  pointer-events:auto;
+}
+.product-box.vis{opacity:1}
+.product-box img{
+  width:100%;height:100%;
+  object-fit:cover;
+  border-radius:12px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+
+<div id="seg-prog-wrap"><div id="seg-prog-bar"></div></div>
+<div id="dots"></div>
+<div id="playing-hint">播放中 · 请稍候</div>
+
+<nav id="nav">
+  <div class="nav-logo">pawooo<span>*</span></div>
+  <div class="nav-links">
+    <a href="#">探索</a>
+    <a href="#">故事</a>
+    <a href="#">加入</a>
+  </div>
+</nav>
+
+<div id="vig-radial"></div>
+<div id="vig-bottom"></div>
+
+<!-- PRODUCT LAYER -->
+<div id="product-layer">
+  <!-- Product boxes will be positioned absolutely for each segment -->
+  <div class="product-box" id="product-1">
+    <img src="product1.jpg" alt="Product 1" class="product-img">
+  </div>
+  <div class="product-box" id="product-2">
+    <img src="product2.jpg" alt="Product 2" class="product-img">
+  </div>
+  <div class="product-box" id="product-3">
+    <img src="product3.jpg" alt="Product 3" class="product-img">
+  </div>
+  <div class="product-box" id="product-4">
+    <img src="product4.jpg" alt="Product 4" class="product-img">
+  </div>
+  <div class="product-box" id="product-5">
+    <img src="product5.jpg" alt="Product 5" class="product-img">
+  </div>
+  <div class="product-box" id="product-6">
+    <img src="product6.jpg" alt="Product 6" class="product-img">
+  </div>
+</div>
+
+<!-- VIDEO STAGE -->
+<div id="stage">
+  <div class="vid-layer active" id="layer-intro">
+    <video id="vid-intro" muted playsinline preload="auto" loop>
+      <source src="首.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="vid-layer" id="layer-main">
+    <video id="vid-main" muted playsinline preload="auto">
+      <source src="main.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="vid-layer" id="layer-outro">
+    <video id="vid-outro" muted playsinline preload="auto" loop>
+      <source src="尾.mp4" type="video/mp4">
+    </video>
+  </div>
+</div>
+
+<!-- COPY LAYER -->
+<div id="copy-layer">
+
+  <!-- INTRO (scroll = 0) -->
+  <div class="copy-block vis" id="c-intro">
+    <div class="eyebrow">每一只，都值得被记住</div>
+    <div class="big-title">pawooo<span class="acc">*</span></div>
+    <p class="sub intro-sub">不只是宠物品牌。是一种对生命温度的执念，对每一个爪印的珍视。</p>
+    <div class="scroll-cue">
+      <span class="scroll-cue-line"></span>
+      <span>向下滚动开始</span>
+    </div>
+  </div>
+
+  <!-- CH1 相遇 0–18% -->
+  <div class="copy-block" id="c-ch1">
+    <div class="ch-tag">Chapter 01 / 相遇</div>
+    <div class="ch-title">那一眼<br>就是<br><span class="hi">一生。</span></div>
+    <p class="sub">有些相遇没有预兆，却改变了所有。它用湿漉漉的鼻尖触碰你的掌心，世界就此不同。</p>
+  </div>
+
+  <!-- CH2 成长 18–37% -->
+  <div class="copy-block lay-right" id="c-ch2">
+    <div class="ch-tag">Chapter 02 / 成长</div>
+    <div class="ch-title">从<span class="hi">混乱</span>到<br>默契，<br>只需要时间。</div>
+    <p class="sub">它推倒你的咖啡，咬坏你的鞋，又用一个大大的拥抱告诉你——这一切，都值得。</p>
+  </div>
+
+  <!-- CH3 陪伴 37–56% -->
+  <div class="copy-block lay-center" id="c-ch3">
+    <div class="quote-block">
+      <span class="q-mark">"</span>
+      <p class="q-text">它不会说话，<br>却把所有的话<br>都藏在眼睛里。</p>
+    </div>
+  </div>
+
+  <!-- CH4 仪式 56–74% -->
+  <div class="copy-block" id="c-ch4">
+    <div class="ch-tag">Chapter 04 / 仪式</div>
+    <div class="ch-title">每天的<br>早安，<br><span class="hi">都是礼物。</span></div>
+    <p class="sub">pawooo 相信，日常里的每一个小仪式，是爱意最真实的形状。用最好的，给最重要的。</p>
+  </div>
+
+  <!-- CH5 承诺 74–93% -->
+  <div class="copy-block lay-right" id="c-ch5">
+    <div class="ch-tag">Chapter 05 / 承诺</div>
+    <div class="ch-title">我们只<br>做一件事：<br><span class="hi">不辜负。</span></div>
+    <p class="sub">从原料到配方，从设计到体验，每一个决定，都以它的健康与快乐为准绳。</p>
+  </div>
+
+  <!-- OUTRO scroll ≥ 98% -->
+  <div class="copy-block lay-center" id="c-outro">
+    <div class="outro-label">欢迎加入 pawooo</div>
+    <div class="outro-title">
+      让爱
+      <small>有一个好去处</small>
+    </div>
+    <div class="cta-row">
+      <a href="#" class="btn-fill">探索产品系列</a>
+      <a href="#" class="btn-line">了解我们的故事</a>
+    </div>
+    <div class="tags">
+      <span class="tag">天然成分</span>
+      <span class="tag">兽医认证</span>
+      <span class="tag">可持续包装</span>
+      <span class="tag">精心制造</span>
+    </div>
+  </div>
+
+</div><!-- /copy-layer -->
+
+<script>
+(function(){
+'use strict';
+
+// ─── SEGMENT DEFINITIONS ─────────────────────────────────────
+// Each segment describes one "scroll trigger" playback unit
+// vid: which video element to use
+// start/end: time range in seconds to play
+// copyId: which copy block to show
+// idle: true = waiting state (no playback, just loop intro)
+const SEGMENTS = [
+  { vid:'intro', start:0,     end:0,      copyId:'c-intro', idle:true  }, // step 0 — waiting
+  { vid:'intro', start:0,     end:4.017,  copyId:'c-intro', idle:false }, // step 1 — 首.mp4 full
+  { vid:'main',  start:0,     end:4,      copyId:'c-ch1',   idle:false }, // step 2
+  { vid:'main',  start:4,     end:8,      copyId:'c-ch2',   idle:false }, // step 3
+  { vid:'main',  start:8,     end:12,     copyId:'c-ch3',   idle:false }, // step 4
+  { vid:'main',  start:12,    end:16.13,  copyId:'c-ch4',   idle:false }, // step 5
+  { vid:'outro', start:0,     end:4.017,  copyId:'c-outro', idle:false }, // step 6 — 尾.mp4 full
+];
+// step 5 reuses c-ch4 (4th copy block); c-ch5 shown at final idle
+const LAST = SEGMENTS.length - 1;
+
+// ─── DOM ─────────────────────────────────────────────────────
+const vidIntro  = document.getElementById('vid-intro');
+const vidMain   = document.getElementById('vid-main');
+const vidOutro  = document.getElementById('vid-outro');
+const layIntro  = document.getElementById('layer-intro');
+const layMain   = document.getElementById('layer-main');
+const layOutro  = document.getElementById('layer-outro');
+const segBar    = document.getElementById('seg-prog-bar');
+const dotsWrap  = document.getElementById('dots');
+const hint      = document.getElementById('playing-hint');
+
+function getVid(name){
+  return name==='intro' ? vidIntro : name==='main' ? vidMain : vidOutro;
+}
+function getLay(name){
+  return name==='intro' ? layIntro : name==='main' ? layMain : layOutro;
+}
+
+// ─── STATE ───────────────────────────────────────────────────
+let step      = 0;
+let playing   = false;
+let rafId     = null;
+let iosReady  = false;
+
+// ─── BUILD DOTS (steps 1–6) ──────────────────────────────────
+const dotEls = [];
+for(let i = 1; i <= LAST; i++){
+  const d = document.createElement('div');
+  d.className = 'dot';
+  dotsWrap.appendChild(d);
+  dotEls.push(d); // dotEls[0] = step1, dotEls[5] = step6
+}
+function updateDots(){
+  dotEls.forEach((d,i)=>{
+    const s = i+1;
+    d.classList.toggle('active', s===step);
+    d.classList.toggle('done',   s<step);
+  });
+}
+
+// ─── COPY VISIBILITY ─────────────────────────────────────────
+function showCopy(id){
+  document.querySelectorAll('.copy-block').forEach(el=>el.classList.remove('vis'));
+  const el = document.getElementById(id);
+  if(el) el.classList.add('vis');
+}
+
+function showProductBox(step){
+  // Hide all product boxes first
+  document.querySelectorAll('.product-box').forEach(el=>el.classList.remove('vis'));
+  
+  // Show product box corresponding to step (steps 1-6 map to product boxes 1-6)
+  if(step >= 1 && step <= 6){
+    const productBox = document.getElementById('product-' + step);
+    if(productBox) productBox.classList.add('vis');
+  }
+}
+
+// ─── LAYER SWITCH ────────────────────────────────────────────
+function activateLayer(name){
+  ['intro','main','outro'].forEach(n=>{
+    getLay(n).classList.toggle('active', n===name);
+  });
+}
+
+// ─── PLAY SEGMENT ────────────────────────────────────────────
+function playSegment(s){
+  if(playing) return;
+  const seg = SEGMENTS[s];
+  if(!seg || seg.idle) return;
+
+  playing = true;
+  hint.classList.add('show');
+  segBar.style.width = '0%';
+
+  const vid = getVid(seg.vid);
+  activateLayer(seg.vid);
+
+  // Remove loop so it doesn't wrap around
+  vid.removeAttribute('loop');
+  try{ vid.currentTime = seg.start; }catch(e){}
+
+  vid.play().catch(()=>{
+    playing = false;
+    hint.classList.remove('show');
+  });
+
+  const dur = seg.end - seg.start;
+  if(rafId) cancelAnimationFrame(rafId);
+
+  function tick(){
+    const elapsed = Math.max(vid.currentTime - seg.start, 0);
+    const p = Math.min(elapsed / dur, 1);
+    segBar.style.width = (p*100)+'%';
+
+    if(p >= 1 || vid.currentTime >= seg.end - 0.04){
+      vid.pause();
+      segBar.style.width = '100%';
+      playing = false;
+      hint.classList.remove('show');
+
+      // Last step: keep outro looping
+      if(s === LAST){
+        vid.setAttribute('loop','');
+        vid.play().catch(()=>{});
+        // Also show ch5 copy after outro starts
+        showCopy('c-ch5');
+      }
+      return;
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+  rafId = requestAnimationFrame(tick);
+}
+
+// ─── ADVANCE ─────────────────────────────────────────────────
+function advance(){
+  if(playing) return;
+  if(step === 0){
+    step = 1;
+  } else if(step < LAST){
+    step++;
+  } else {
+    return; // at end
+  }
+  updateDots();
+  showCopy(SEGMENTS[step].copyId);
+  showProductBox(step);
+  playSegment(step);
+}
+
+// ─── INPUT: WHEEL ────────────────────────────────────────────
+let wheelThrottle = false;
+window.addEventListener('wheel', function(e){
+  e.preventDefault();
+  if(wheelThrottle || playing) return;
+  if(e.deltaY > 0){
+    advance();
+    wheelThrottle = true;
+    setTimeout(()=>{ wheelThrottle=false; }, 350);
+  }
+},{ passive:false });
+
+// ─── INPUT: TOUCH SWIPE ──────────────────────────────────────
+let ty0 = 0;
+window.addEventListener('touchstart', function(e){
+  ty0 = e.touches[0].clientY;
+  if(!iosReady){ iosUnlock(); }
+},{ passive:true });
+window.addEventListener('touchend', function(e){
+  const dy = ty0 - e.changedTouches[0].clientY;
+  if(dy > 40 && !playing) advance();
+},{ passive:true });
+
+// ─── INPUT: KEYBOARD ─────────────────────────────────────────
+window.addEventListener('keydown', function(e){
+  if([' ','ArrowDown','ArrowRight','PageDown'].includes(e.key)){
+    e.preventDefault();
+    if(!playing) advance();
+  }
+});
+
+// ─── IOS UNLOCK ──────────────────────────────────────────────
+function iosUnlock(){
+  iosReady = true;
+  [vidIntro, vidMain, vidOutro].forEach(v=>{
+    v.load();
+    v.play().then(()=>{ v.pause(); v.currentTime=0; }).catch(()=>{});
+  });
+  // restart intro loop after unlock
+  vidIntro.setAttribute('loop','');
+  vidIntro.play().catch(()=>{});
+}
+document.addEventListener('click', function init(){
+  if(!iosReady) iosUnlock();
+  document.removeEventListener('click', init);
+},{ once:true });
+
+// ─── INIT ─────────────────────────────────────────────────────
+showCopy('c-intro');
+updateDots();
+vidIntro.setAttribute('loop','');
+vidIntro.play().catch(()=>{});
+
+})();
+</script>
+</body>
+</html>

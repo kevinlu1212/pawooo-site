@@ -1,0 +1,446 @@
+/* ============================================================
+   pawooo - Scrollytelling Demo
+   分屏固定视觉（左）+ 滚动叙事（右）
+   ============================================================ */
+
+/* --- Reset & Variables --- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Scene 0 (初见) */
+  --s0-bg: #FAF7F2;
+  --s0-bg-alt: #F2EDE4;
+  --s0-accent: #8B6B4A;
+
+  /* Scene 1 (相伴) */
+  --s1-bg: #F0D9CB;
+  --s1-bg-alt: #E8C4A8;
+  --s1-accent: #C47A5A;
+
+  /* Scene 2 (永恒) */
+  --s2-bg: #3D2B1F;
+  --s2-bg-alt: #2C1F14;
+  --s2-accent: #C4A882;
+
+  --text-primary: #2C1F14;
+  --text-secondary: #7A6050;
+  --text-muted: #A89080;
+  --white: #FFFFFF;
+  --cream: #FAF7F2;
+  --warm-brown: #8B6B4A;
+  --dark-brown: #3D2B1F;
+  --soft-brown: #C4A882;
+
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-sans: 'DM Sans', sans-serif;
+  --font-round: 'Nunito', sans-serif;
+
+  /* Scene transition duration */
+  --transition-duration: 0.8s;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--s0-bg);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  line-height: 1.7;
+}
+
+/* ============================================================
+   SCROLLYTELLING LAYOUT
+   ============================================================ */
+.scrolly {
+  display: flex;
+  position: relative;
+}
+
+/* --- Fixed Visual Panel (Left 50%) --- */
+.scrolly-visual {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 50vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 1;
+  transition: background var(--transition-duration) ease;
+}
+
+.visual-bg {
+  position: absolute;
+  inset: 0;
+  transition: background var(--transition-duration) ease;
+}
+
+/* Scene backgrounds (applied via JS, but define fallbacks) */
+.scene-0 .scrolly-visual { background: var(--s0-bg); }
+.scene-0 .visual-bg {
+  background: radial-gradient(ellipse at 70% 30%, var(--s0-bg-alt) 0%, transparent 70%);
+}
+
+.scene-1 .scrolly-visual { background: var(--s1-bg); }
+.scene-1 .visual-bg {
+  background: radial-gradient(ellipse at 30% 70%, var(--s1-bg-alt) 0%, transparent 70%);
+}
+
+.scene-2 .scrolly-visual { background: var(--s2-bg); }
+.scene-2 .visual-bg {
+  background: radial-gradient(ellipse at 50% 50%, rgba(196, 168, 130, 0.15) 0%, transparent 70%);
+}
+
+/* --- Dog --- */
+.visual-dog {
+  position: relative;
+  z-index: 2;
+  width: 70%;
+  height: 70%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dog-frame {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 2rem;
+  transition: all var(--transition-duration) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dog-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-duration) cubic-bezier(0.22, 1, 0.36, 1),
+              border-radius var(--transition-duration) ease;
+}
+
+/* Scene-specific dog transforms */
+.scene-0 .dog-frame {
+  border-radius: 2rem;
+  box-shadow: 0 20px 60px rgba(61, 43, 31, 0.12);
+}
+.scene-0 .dog-img {
+  transform: scale(1) translate(0, 0);
+}
+
+.scene-1 .dog-frame {
+  border-radius: 40% 40% 2rem 2rem;
+  box-shadow: 0 24px 64px rgba(196, 122, 90, 0.2);
+}
+.scene-1 .dog-img {
+  transform: scale(1.25) translate(-5%, -2%);
+}
+
+.scene-2 .dog-frame {
+  border-radius: 50% 50% 2rem 2rem;
+  width: 75%;
+  height: 75%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+.scene-2 .dog-img {
+  transform: scale(0.8) translate(0, 0);
+}
+
+/* --- Floating Decorative Icons --- */
+.float-icon {
+  position: absolute;
+  font-size: 1.4rem;
+  opacity: 0;
+  transition: all var(--transition-duration) ease;
+  pointer-events: none;
+}
+
+.scene-0 .float-icon-1 { opacity: 0.3; top: 12%; right: 8%; animation: floatA 4s ease-in-out infinite; }
+.scene-0 .float-icon-2 { opacity: 0.2; bottom: 15%; left: 5%; animation: floatB 5s ease-in-out infinite 1s; }
+
+.scene-1 .float-icon-1 { opacity: 0.35; top: 8%; right: 12%; animation: floatA 3.5s ease-in-out infinite; }
+.scene-1 .float-icon-2 { opacity: 0.3; bottom: 12%; right: 10%; animation: floatB 4.5s ease-in-out infinite 0.5s; }
+.scene-1 .float-icon-3 { opacity: 0.25; top: 45%; left: 5%; animation: floatA 6s ease-in-out infinite 1.5s; }
+
+.scene-2 .float-icon-1 { opacity: 0.15; top: 10%; left: 10%; animation: floatA 5s ease-in-out infinite; }
+.scene-2 .float-icon-2 { opacity: 0.2; bottom: 20%; right: 8%; animation: floatB 4s ease-in-out infinite 1s; }
+
+@keyframes floatA {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(5deg); }
+}
+
+@keyframes floatB {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(8px) rotate(-5deg); }
+}
+
+/* --- Scene Counter --- */
+.scene-counter {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 3rem;
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-family: var(--font-round);
+  transition: color var(--transition-duration) ease;
+}
+
+.scene-0 .scene-counter { color: var(--text-secondary); }
+.scene-1 .scene-counter { color: var(--dark-brown); }
+.scene-2 .scene-counter { color: var(--soft-brown); }
+
+.counter-current {
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: opacity 0.3s ease;
+}
+
+.counter-sep {
+  font-size: 1rem;
+  opacity: 0.4;
+}
+
+.counter-total {
+  font-size: 1rem;
+  font-weight: 400;
+  opacity: 0.5;
+}
+
+/* --- Progress Bar --- */
+.progress-track {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.06);
+  z-index: 10;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--warm-brown), var(--soft-brown), var(--warm-brown));
+  transition: width 0.1s linear;
+}
+
+/* ============================================================
+   SCROLLABLE NARRATIVE (Right 50%)
+   ============================================================ */
+.scrolly-narrative {
+  width: 50vw;
+  margin-left: 50vw;
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}
+
+/* --- Each Scene --- */
+.narrative-scene {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 6rem 4rem;
+  position: relative;
+  /* Ensure scenes stack naturally */
+}
+
+.narrative-scene:last-child {
+  min-height: calc(100vh + 1px); /* Extra room for last scene to fully settle */
+}
+
+/* --- Scene Card (text panel) --- */
+.scene-card {
+  max-width: 440px;
+  padding: 2rem 0;
+  position: relative;
+}
+
+.scene-number {
+  font-family: var(--font-round);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--warm-brown);
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  padding: 0.35rem 1rem;
+  border: 1px solid rgba(139, 107, 74, 0.2);
+  border-radius: 2rem;
+}
+
+.scene-heading {
+  font-family: var(--font-serif);
+  font-size: 2.8rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+}
+
+.scene-heading em {
+  font-style: italic;
+  color: var(--warm-brown);
+}
+
+.scene-body {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.9;
+  margin-bottom: 1.5rem;
+}
+
+.scene-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  margin-top: 2rem;
+}
+
+.scene-quote {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--text-primary);
+  border-left: 2px solid var(--warm-brown);
+  padding-left: 1.5rem;
+  margin: 2rem 0;
+  line-height: 1.6;
+}
+
+.btn-primary {
+  display: inline-block;
+  background: var(--dark-brown);
+  color: var(--cream);
+  padding: 0.85rem 2rem;
+  border-radius: 2rem;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  font-family: var(--font-sans);
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.btn-primary:hover {
+  background: var(--warm-brown);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(139, 107, 74, 0.3);
+}
+
+/* Scene-specific accent colors */
+.narrative-scene[data-scene="1"] .scene-heading em { color: var(--s1-accent); }
+.narrative-scene[data-scene="1"] .scene-number { border-color: rgba(196, 122, 90, 0.3); color: var(--s1-accent); }
+.narrative-scene[data-scene="1"] .scene-quote { border-color: var(--s1-accent); }
+
+.narrative-scene[data-scene="2"] .scene-heading em { color: var(--s2-accent); }
+.narrative-scene[data-scene="2"] .scene-number { border-color: rgba(196, 168, 130, 0.3); color: var(--s2-accent); }
+.narrative-scene[data-scene="2"] .scene-heading { color: var(--text-primary); }
+
+/* --- Scroll Hint --- */
+.scroll-hint {
+  position: absolute;
+  bottom: 3rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  z-index: 5;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+.scroll-hint.hidden {
+  opacity: 0;
+}
+
+.scroll-arrow {
+  font-size: 1.4rem;
+  animation: bounceDown 2s ease-in-out infinite;
+}
+
+@keyframes bounceDown {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50% { transform: translateY(8px); opacity: 1; }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+  /* Stack vertically: visual on top, narrative below */
+  .scrolly {
+    flex-direction: column;
+  }
+
+  .scrolly-visual {
+    position: relative;
+    width: 100vw;
+    height: 60vh;
+  }
+
+  .scrolly-narrative {
+    width: 100vw;
+    margin-left: 0;
+  }
+
+  .narrative-scene {
+    min-height: auto;
+    padding: 4rem 1.5rem;
+  }
+
+  .scene-card {
+    max-width: 100%;
+  }
+
+  .scene-heading {
+    font-size: 2rem;
+  }
+
+  .scene-counter {
+    bottom: 1.5rem;
+    left: 1.5rem;
+  }
+
+  .scene-2 .dog-frame {
+    width: 65%;
+    height: 65%;
+  }
+
+  .scroll-hint {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .scrolly-visual {
+    height: 50vh;
+  }
+
+  .scene-heading {
+    font-size: 1.8rem;
+  }
+
+  .narrative-scene {
+    padding: 3rem 1.25rem;
+  }
+}

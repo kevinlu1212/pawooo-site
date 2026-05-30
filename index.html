@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pawooo* — 让每一次相遇都留下印记</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Noto+Serif+SC:wght@400;700&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --cream:#F5F0E8;
+  --paw:#D4622A;
+  --sand:#C8B89A;
+}
+
+/* KEY FIX: html/body must be min-height only, NOT overflow:hidden */
+html{scroll-behavior:auto}
+body{
+  width:100%;
+  background:#000;
+  font-family:'Space Grotesk',sans-serif;
+  /* do NOT set overflow:hidden on body — kills scrolling */
+}
+
+/* Scroll spacer creates the scrollable height */
+#scroll-spacer{
+  /* 16.13s × 150vh per second = ~2420vh total scrollable area */
+  height: 2600vh;
+  width:100%;
+  position:relative;
+  z-index:1;
+}
+
+/* Fixed video stage */
+#stage{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100vh;
+  z-index:0;
+  overflow:hidden;
+}
+
+/* Video layers */
+.vid-layer{
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:100%;
+  opacity:0;
+  transition:opacity 0.5s ease;
+  pointer-events:none;
+}
+.vid-layer video{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
+}
+.vid-layer.active{opacity:1}
+
+/* Vignettes */
+#vig-radial{
+  position:fixed;top:0;left:0;width:100%;height:100%;z-index:5;
+  pointer-events:none;
+  background:radial-gradient(ellipse at center, transparent 25%, rgba(0,0,0,0.6) 100%);
+}
+#vig-bottom{
+  position:fixed;bottom:0;left:0;width:100%;height:35vh;z-index:5;
+  pointer-events:none;
+  background:linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%);
+}
+
+/* NAV */
+#nav{
+  position:fixed;top:0;left:0;width:100%;z-index:100;
+  padding:2rem 3rem;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.nav-logo{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;
+  color:var(--cream);letter-spacing:-0.03em;text-transform:lowercase;
+}
+.nav-logo span{color:var(--paw)}
+.nav-links{display:flex;gap:2rem}
+.nav-links a{
+  font-size:0.78rem;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--cream);text-decoration:none;opacity:0.65;
+  font-weight:500;transition:opacity 0.2s;
+}
+.nav-links a:hover{opacity:1}
+
+/* Progress bar */
+#prog{
+  position:fixed;top:0;left:0;height:2px;
+  background:var(--paw);z-index:200;
+  width:0%;
+  transition:width 0.08s linear;
+}
+
+/* Copy layer — fixed, full screen */
+#copy-layer{
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100vh;
+  z-index:20;
+  pointer-events:none;
+}
+
+/* Individual copy blocks — all absolute, full screen, opacity-controlled */
+.copy-block{
+  position:absolute;
+  top:0;left:0;
+  width:100%;height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  padding:6vh 8vw 10vh;
+  opacity:0;
+  transition:opacity 0.55s ease;
+}
+.copy-block.vis{opacity:1}
+
+/* Layout variants */
+.lay-center{justify-content:center;align-items:center;text-align:center}
+.lay-right{align-items:flex-end;text-align:right}
+
+/* Typography */
+.eyebrow{
+  font-size:clamp(0.62rem,1vw,0.8rem);
+  letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--sand);font-weight:500;margin-bottom:1.2rem;
+}
+.ch-tag{
+  display:inline-block;
+  background:var(--paw);color:var(--cream);
+  font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;
+  padding:0.35em 0.9em;font-weight:500;margin-bottom:1.4rem;
+  width:fit-content;
+}
+.big-title{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(4rem,10vw,10rem);
+  line-height:0.88;letter-spacing:-0.05em;text-transform:lowercase;
+  color:var(--cream);
+}
+.big-title .acc{color:var(--paw)}
+.ch-title{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(2.4rem,5.5vw,5.8rem);
+  line-height:0.96;letter-spacing:-0.03em;text-transform:lowercase;
+  color:var(--cream);max-width:16ch;
+}
+.ch-title .hi{color:var(--paw)}
+.sub{
+  font-size:clamp(0.88rem,1.3vw,1.05rem);
+  color:var(--sand);max-width:38ch;
+  margin-top:1.5rem;line-height:1.7;font-weight:300;
+}
+.intro-sub{max-width:32ch}
+.scroll-cue{
+  display:flex;align-items:center;gap:0.8rem;
+  margin-top:2.5rem;color:rgba(245,240,232,0.45);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;
+}
+.scroll-cue-line{width:36px;height:1px;background:rgba(245,240,232,0.4)}
+
+/* Quote block */
+.quote-block{max-width:820px;text-align:center}
+.q-mark{
+  font-family:'Syne',sans-serif;font-size:5rem;
+  line-height:0.6;color:var(--paw);opacity:0.8;
+  display:block;margin-bottom:0.8rem;
+}
+.q-text{
+  font-family:'Noto Serif SC',serif;font-weight:700;
+  font-size:clamp(1.9rem,4.5vw,4.4rem);
+  color:var(--cream);line-height:1.35;letter-spacing:-0.01em;
+}
+
+/* Outro */
+.outro-label{
+  font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--paw);font-weight:500;margin-bottom:1.4rem;
+}
+.outro-title{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:clamp(3rem,8.5vw,8.5rem);
+  line-height:0.9;letter-spacing:-0.05em;text-transform:lowercase;
+  color:var(--cream);
+}
+.outro-title small{
+  font-size:0.5em;color:var(--sand);
+  display:block;margin-top:0.3em;letter-spacing:-0.02em;
+}
+.cta-row{
+  display:flex;gap:1rem;flex-wrap:wrap;
+  margin-top:2.5rem;pointer-events:auto;
+}
+.lay-center .cta-row{justify-content:center}
+.btn-fill{
+  background:var(--paw);color:var(--cream);
+  font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;
+  padding:0.95em 2.4em;font-weight:500;
+  font-family:'Space Grotesk',sans-serif;text-decoration:none;
+  display:inline-block;transition:background 0.2s,transform 0.15s;
+  border:none;cursor:pointer;
+}
+.btn-fill:hover{background:#bc5220;transform:translateY(-1px)}
+.btn-line{
+  background:transparent;color:var(--cream);
+  font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;
+  padding:0.95em 2.4em;font-weight:500;
+  border:1px solid rgba(245,240,232,0.3);
+  font-family:'Space Grotesk',sans-serif;text-decoration:none;
+  display:inline-block;transition:border-color 0.2s,transform 0.15s;cursor:pointer;
+}
+.btn-line:hover{border-color:var(--cream);transform:translateY(-1px)}
+.tags{display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:2rem}
+.lay-center .tags{justify-content:center}
+.tag{
+  border:1px solid rgba(245,240,232,0.22);
+  color:rgba(245,240,232,0.5);
+  font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;
+  padding:0.38em 0.95em;font-weight:500;
+}
+
+/* Mobile */
+@media(max-width:768px){
+  #nav{padding:1.5rem 1.5rem}
+  .nav-links{display:none}
+  .copy-block{padding:4vh 5vw 8vh}
+  .lay-right{align-items:flex-start;text-align:left}
+  .lay-right .ch-title{max-width:100%}
+  .big-title{font-size:clamp(3.2rem,15vw,6rem)}
+}
+</style>
+</head>
+<body>
+
+<div id="prog"></div>
+
+<nav id="nav">
+  <div class="nav-logo">pawooo<span>*</span></div>
+  <div class="nav-links">
+    <a href="#">探索</a>
+    <a href="#">故事</a>
+    <a href="#">加入</a>
+  </div>
+</nav>
+
+<div id="vig-radial"></div>
+<div id="vig-bottom"></div>
+
+<!-- VIDEO STAGE -->
+<div id="stage">
+  <div class="vid-layer active" id="layer-intro">
+    <video id="vid-intro" muted playsinline preload="auto" loop>
+      <source src="首.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="vid-layer" id="layer-main">
+    <video id="vid-main" muted playsinline preload="auto">
+      <source src="main.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="vid-layer" id="layer-outro">
+    <video id="vid-outro" muted playsinline preload="auto" loop>
+      <source src="尾.mp4" type="video/mp4">
+    </video>
+  </div>
+</div>
+
+<!-- COPY LAYER -->
+<div id="copy-layer">
+
+  <!-- INTRO (scroll = 0) -->
+  <div class="copy-block vis" id="c-intro">
+    <div class="eyebrow">每一只，都值得被记住</div>
+    <div class="big-title">pawooo<span class="acc">*</span></div>
+    <p class="sub intro-sub">不只是宠物品牌。是一种对生命温度的执念，对每一个爪印的珍视。</p>
+    <div class="scroll-cue">
+      <span class="scroll-cue-line"></span>
+      <span>向下滚动开始</span>
+    </div>
+  </div>
+
+  <!-- CH1 相遇 0–18% -->
+  <div class="copy-block" id="c-ch1">
+    <div class="ch-tag">Chapter 01 / 相遇</div>
+    <div class="ch-title">那一眼<br>就是<br><span class="hi">一生。</span></div>
+    <p class="sub">有些相遇没有预兆，却改变了所有。它用湿漉漉的鼻尖触碰你的掌心，世界就此不同。</p>
+  </div>
+
+  <!-- CH2 成长 18–37% -->
+  <div class="copy-block lay-right" id="c-ch2">
+    <div class="ch-tag">Chapter 02 / 成长</div>
+    <div class="ch-title">从<span class="hi">混乱</span>到<br>默契，<br>只需要时间。</div>
+    <p class="sub">它推倒你的咖啡，咬坏你的鞋，又用一个大大的拥抱告诉你——这一切，都值得。</p>
+  </div>
+
+  <!-- CH3 陪伴 37–56% -->
+  <div class="copy-block lay-center" id="c-ch3">
+    <div class="quote-block">
+      <span class="q-mark">"</span>
+      <p class="q-text">它不会说话，<br>却把所有的话<br>都藏在眼睛里。</p>
+    </div>
+  </div>
+
+  <!-- CH4 仪式 56–74% -->
+  <div class="copy-block" id="c-ch4">
+    <div class="ch-tag">Chapter 04 / 仪式</div>
+    <div class="ch-title">每天的<br>早安，<br><span class="hi">都是礼物。</span></div>
+    <p class="sub">pawooo 相信，日常里的每一个小仪式，是爱意最真实的形状。用最好的，给最重要的。</p>
+  </div>
+
+  <!-- CH5 承诺 74–93% -->
+  <div class="copy-block lay-right" id="c-ch5">
+    <div class="ch-tag">Chapter 05 / 承诺</div>
+    <div class="ch-title">我们只<br>做一件事：<br><span class="hi">不辜负。</span></div>
+    <p class="sub">从原料到配方，从设计到体验，每一个决定，都以它的健康与快乐为准绳。</p>
+  </div>
+
+  <!-- OUTRO scroll ≥ 98% -->
+  <div class="copy-block lay-center" id="c-outro">
+    <div class="outro-label">欢迎加入 pawooo</div>
+    <div class="outro-title">
+      让爱
+      <small>有一个好去处</small>
+    </div>
+    <div class="cta-row">
+      <a href="#" class="btn-fill">探索产品系列</a>
+      <a href="#" class="btn-line">了解我们的故事</a>
+    </div>
+    <div class="tags">
+      <span class="tag">天然成分</span>
+      <span class="tag">兽医认证</span>
+      <span class="tag">可持续包装</span>
+      <span class="tag">精心制造</span>
+    </div>
+  </div>
+
+</div><!-- /copy-layer -->
+
+<!-- SCROLL SPACER — this is what makes the page scrollable -->
+<div id="scroll-spacer"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  const MAIN_DUR = 16.13;   // seconds of main.mp4
+  const VH_PER_SEC = 150;   // how many vh per second of video
+  const TOTAL_VH = MAIN_DUR * VH_PER_SEC + 200; // extra 200vh breathing room
+
+  // Set spacer height dynamically
+  document.getElementById('scroll-spacer').style.height = TOTAL_VH + 'vh';
+
+  const vidIntro = document.getElementById('vid-intro');
+  const vidMain  = document.getElementById('vid-main');
+  const vidOutro = document.getElementById('vid-outro');
+  const layIntro = document.getElementById('layer-intro');
+  const layMain  = document.getElementById('layer-main');
+  const layOutro = document.getElementById('layer-outro');
+  const prog     = document.getElementById('prog');
+
+  // Chapter definitions: [start, end] of mainProgress (0–1)
+  const chapters = [
+    { el: document.getElementById('c-ch1'), s: 0.02, e: 0.20 },
+    { el: document.getElementById('c-ch2'), s: 0.20, e: 0.38 },
+    { el: document.getElementById('c-ch3'), s: 0.38, e: 0.57 },
+    { el: document.getElementById('c-ch4'), s: 0.57, e: 0.75 },
+    { el: document.getElementById('c-ch5'), s: 0.75, e: 0.95 },
+  ];
+  const cIntro = document.getElementById('c-intro');
+  const cOutro = document.getElementById('c-outro');
+
+  let state = 'intro'; // 'intro' | 'main' | 'outro'
+  let seekTarget = 0;
+
+  function show(el){ el.classList.add('vis') }
+  function hide(el){ el.classList.remove('vis') }
+
+  function activateLayer(which){
+    layIntro.classList.toggle('active', which === 'intro');
+    layMain.classList.toggle('active',  which === 'main');
+    layOutro.classList.toggle('active', which === 'outro');
+  }
+
+  function setIntro(){
+    if(state === 'intro') return;
+    state = 'intro';
+    activateLayer('intro');
+    vidIntro.play().catch(()=>{});
+    vidOutro.pause();
+    show(cIntro); hide(cOutro);
+    chapters.forEach(c => hide(c.el));
+  }
+
+  function setMain(){
+    if(state !== 'main'){
+      state = 'main';
+      activateLayer('main');
+      vidOutro.pause();
+      hide(cIntro); hide(cOutro);
+    }
+  }
+
+  function setOutro(){
+    if(state === 'outro') return;
+    state = 'outro';
+    activateLayer('outro');
+    vidOutro.play().catch(()=>{});
+    hide(cIntro); show(cOutro);
+    chapters.forEach(c => hide(c.el));
+  }
+
+  function updateChapters(p){
+    chapters.forEach(c => {
+      const inRange = p >= c.s && p < c.e;
+      c.el.classList.toggle('vis', inRange);
+    });
+  }
+
+  function tick(){
+    const scrollY   = window.pageYOffset;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const rawPct    = maxScroll > 0 ? scrollY / maxScroll : 0;
+    const pct       = Math.min(Math.max(rawPct, 0), 1);
+
+    prog.style.width = (pct * 100) + '%';
+
+    if(pct < 0.005){
+      setIntro();
+    } else if(pct >= 0.98){
+      setOutro();
+    } else {
+      setMain();
+      // Map scroll 0.005–0.98 → 0–MAIN_DUR
+      const mainP = (pct - 0.005) / 0.975;
+      seekTarget = Math.min(Math.max(mainP * MAIN_DUR, 0), MAIN_DUR - 0.05);
+
+      // Smooth lerp seek
+      const cur  = vidMain.currentTime;
+      const diff = seekTarget - cur;
+      if(Math.abs(diff) > 0.033){
+        try { vidMain.currentTime = cur + diff * 0.3; } catch(e){}
+      }
+
+      updateChapters(mainP);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  // Start RAF loop
+  requestAnimationFrame(tick);
+
+  // Autoplay intro on load
+  vidIntro.play().catch(()=>{});
+
+  // iOS: load all videos on first user gesture
+  function iosInit(){
+    vidMain.load();
+    vidOutro.load();
+    // iOS needs a short play+pause to "unlock" video seek
+    vidMain.play().then(()=>{ vidMain.pause(); vidMain.currentTime=0; }).catch(()=>{});
+    document.removeEventListener('touchstart', iosInit);
+    document.removeEventListener('click', iosInit);
+  }
+  document.addEventListener('touchstart', iosInit, {once:true, passive:true});
+  document.addEventListener('click', iosInit, {once:true});
+
+})();
+</script>
+</body>
+</html>
