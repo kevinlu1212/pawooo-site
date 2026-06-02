@@ -66,6 +66,7 @@ html,body{
   opacity:0;
   transition:opacity 0.5s ease;
   pointer-events:none;
+  background:#000;
 }
 .vid-layer video{
   width:100%;height:100%;
@@ -242,7 +243,7 @@ html,body{
 .product-box{
   position:absolute;
   top:50%;
-  width:200px;height:200px;
+  width:200px;
   transform:translateY(-50%);
   opacity:0;
   transition:opacity 0.5s ease;
@@ -251,20 +252,44 @@ html,body{
 .product-box.pos-left{left:5%}
 .product-box.pos-right{right:12%}
 .product-box.vis{opacity:1}
-.product-box img{
-  width:100%;height:100%;
-  object-fit:cover;
+.product-thumb{
+  width:100%;aspect-ratio:1/1;
   border-radius:12px;
   box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  overflow:hidden;
+  position:relative;
 }
+.product-thumb::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background: radial-gradient(circle at 30% 28%, rgba(255,255,255,0.18), transparent 55%);
+  pointer-events:none;
+  z-index:2;
+}
+.product-thumb img{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
+  position:relative;
+  z-index:1;
+}
+.thumb-1{background:linear-gradient(135deg,#D4622A 0%,#7A3210 100%)}
+.thumb-2{background:linear-gradient(135deg,#C8B89A 0%,#5E4E33 100%)}
+.thumb-3{background:linear-gradient(135deg,#E8DCC4 0%,#7A6A4A 100%)}
+.thumb-4{background:linear-gradient(135deg,#6B5D4A 0%,#221C16 100%)}
+.thumb-5{background:linear-gradient(135deg,#B89070 0%,#4A2D1A 100%)}
+.thumb-6{background:linear-gradient(135deg,#5A7D8C 0%,#162A36 100%)}
 .product-label{
-  font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;
-  color:var(--cream);margin-top:0.6rem;text-align:center;
-  opacity:0.7;
+  font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--cream);margin-top:0.7rem;text-align:center;
+  opacity:0.9;font-weight:500;
 }
 
 /* Mobile */
 @media(max-width:768px){
+  /* Show full video frame on mobile — no cropping */
+  .vid-layer video{object-fit:contain}
   #nav{padding:1.1rem 1.2rem}
   .nav-logo{font-size:1.3rem}
   .nav-links{display:none}
@@ -385,27 +410,39 @@ html,body{
 <!-- PRODUCT LAYER -->
 <div id="product-layer">
   <div class="product-box pos-right" id="product-1">
-    <img src="product0.jpg" alt="Product 0" onerror="this.parentElement.style.display='none'">
+    <div class="product-thumb thumb-1">
+      <img src="product0.jpg" alt="Pawooo 礼盒" onerror="this.style.display='none'">
+    </div>
     <div class="product-label">Pawooo 礼盒</div>
   </div>
   <div class="product-box pos-left" id="product-2">
-    <img src="product1.jpg" alt="Product 1" onerror="this.parentElement.style.display='none'">
+    <div class="product-thumb thumb-2">
+      <img src="product1.jpg" alt="Pawooo 天然粮" onerror="this.style.display='none'">
+    </div>
     <div class="product-label">Pawooo 天然粮</div>
   </div>
   <div class="product-box pos-right" id="product-3">
-    <img src="product2.jpg" alt="Product 2" onerror="this.parentElement.style.display='none'">
+    <div class="product-thumb thumb-3">
+      <img src="product2.jpg" alt="Pawooo 零食" onerror="this.style.display='none'">
+    </div>
     <div class="product-label">Pawooo 零食</div>
   </div>
   <div class="product-box pos-left" id="product-4">
-    <img src="product3.jpg" alt="Product 3" onerror="this.parentElement.style.display='none'">
+    <div class="product-thumb thumb-4">
+      <img src="product3.jpg" alt="Pawooo 项圈" onerror="this.style.display='none'">
+    </div>
     <div class="product-label">Pawooo 项圈</div>
   </div>
   <div class="product-box pos-right" id="product-5">
-    <img src="product4.jpg" alt="Product 4" onerror="this.parentElement.style.display='none'">
+    <div class="product-thumb thumb-5">
+      <img src="product4.jpg" alt="Pawooo 玩具" onerror="this.style.display='none'">
+    </div>
     <div class="product-label">Pawooo 玩具</div>
   </div>
   <div class="product-box pos-left" id="product-6">
-    <img src="product5.jpg" alt="Product 5" onerror="this.parentElement.style.display='none'">
+    <div class="product-thumb thumb-6">
+      <img src="product5.jpg" alt="Pawooo 护理" onerror="this.style.display='none'">
+    </div>
     <div class="product-label">Pawooo 护理</div>
   </div>
 </div>
