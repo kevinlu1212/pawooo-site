@@ -56,6 +56,7 @@ html,body{
   width:100%;height:100vh;
   z-index:0;
   overflow:hidden;
+  background:#000 url('assets/hero-samoyed.png') center/cover no-repeat;
 }
 
 /* Video layers */
@@ -275,12 +276,55 @@ html,body{
   .product-box.pos-left{left:3%}
   .product-box.pos-right{right:3%}
 }
+
+/* Start overlay — shown when autoplay is blocked */
+#start-overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  z-index:9999;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  background:rgba(0,0,0,0.55);
+  cursor:pointer;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.35s ease;
+}
+#start-overlay.show{opacity:1;pointer-events:auto}
+.start-btn{
+  display:flex;align-items:center;gap:1rem;
+  padding:1.1rem 2.4rem;
+  border:1px solid rgba(245,240,232,0.5);
+  color:var(--cream);
+  font-size:0.85rem;letter-spacing:0.18em;text-transform:uppercase;
+  font-weight:500;
+  background:rgba(0,0,0,0.25);
+  transition:border-color 0.2s,background 0.2s,transform 0.15s;
+}
+#start-overlay:hover .start-btn{border-color:var(--cream);background:rgba(245,240,232,0.08);transform:translateY(-1px)}
+.start-icon{
+  width:0;height:0;
+  border-style:solid;
+  border-width:7px 0 7px 11px;
+  border-color:transparent transparent transparent var(--cream);
+}
+.start-hint{
+  margin-top:1.2rem;
+  color:rgba(245,240,232,0.55);
+  font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;
+}
 </style>
 </head>
 <body>
 
 <div id="seg-prog-wrap"><div id="seg-prog-bar"></div></div>
 <div id="dots"></div>
+
+<!-- START OVERLAY (autoplay fallback) -->
+<div id="start-overlay" aria-label="点击开始">
+  <div class="start-btn">
+    <span class="start-icon"></span>
+    <span>点击开始</span>
+  </div>
+  <div class="start-hint">或滚动 / 按下任意键</div>
+</div>
 
 <nav id="nav">
   <div class="nav-logo">pawooo<span>*</span></div>
@@ -297,23 +341,23 @@ html,body{
 <!-- PRODUCT LAYER -->
 <div id="product-layer">
   <div class="product-box pos-left" id="product-2">
-    <img src="product1.jpg" alt="Product 1">
+    <img src="product1.jpg" alt="Product 1" onerror="this.parentElement.style.display='none'">
     <div class="product-label">Pawooo 天然粮</div>
   </div>
   <div class="product-box pos-right" id="product-3">
-    <img src="product2.jpg" alt="Product 2">
+    <img src="product2.jpg" alt="Product 2" onerror="this.parentElement.style.display='none'">
     <div class="product-label">Pawooo 零食</div>
   </div>
   <div class="product-box pos-left" id="product-4">
-    <img src="product3.jpg" alt="Product 3">
+    <img src="product3.jpg" alt="Product 3" onerror="this.parentElement.style.display='none'">
     <div class="product-label">Pawooo 项圈</div>
   </div>
   <div class="product-box pos-right" id="product-5">
-    <img src="product4.jpg" alt="Product 4">
+    <img src="product4.jpg" alt="Product 4" onerror="this.parentElement.style.display='none'">
     <div class="product-label">Pawooo 玩具</div>
   </div>
   <div class="product-box pos-left" id="product-6">
-    <img src="product5.jpg" alt="Product 5">
+    <img src="product5.jpg" alt="Product 5" onerror="this.parentElement.style.display='none'">
     <div class="product-label">Pawooo 护理</div>
   </div>
 </div>
@@ -549,6 +593,7 @@ function goBack(){
 // WHEEL
 let wheelThrottle = false;
 window.addEventListener('wheel', function(e){
+  if(!iosReady) iosUnlock();
   e.preventDefault();
   if(wheelThrottle) return;
   wheelThrottle = true;
@@ -577,6 +622,7 @@ window.addEventListener('touchend', function(e){
 
 // KEYBOARD
 window.addEventListener('keydown', function(e){
+  if(!iosReady) iosUnlock();
   if([' ','ArrowDown','ArrowRight','PageDown'].includes(e.key)){
     e.preventDefault();
     goForward();
@@ -594,10 +640,29 @@ function iosUnlock(){
   });
   vidIntro.setAttribute('loop','');
   vidIntro.play().catch(()=>{});
+  const ov = document.getElementById('start-overlay');
+  if(ov) ov.classList.remove('show');
 }
+document.getElementById('start-overlay').addEventListener('click', function(){
+  if(!iosReady) iosUnlock();
+  else this.classList.remove('show');
+});
 document.addEventListener('click', function init(){
   if(!iosReady) iosUnlock();
   document.removeEventListener('click', init);
+},{ once:true });
+
+// Detect autoplay block & show overlay
+setTimeout(function(){
+  if(!iosReady && vidIntro.paused){
+    const ov = document.getElementById('start-overlay');
+    if(ov) ov.classList.add('show');
+  }
+}, 600);
+// Also dismiss overlay once video actually starts
+vidIntro.addEventListener('playing', function(){
+  const ov = document.getElementById('start-overlay');
+  if(ov) ov.classList.remove('show');
 },{ once:true });
 
 showCopy('c-intro');
