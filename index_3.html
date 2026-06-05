@@ -72,10 +72,19 @@ html,body{
   width:100%;height:100%;
   object-fit:cover;
   display:block;
-  filter: blur(22px) brightness(0.48) saturate(0.85);
-  transform: scale(1.1);
 }
 .vid-layer.active{opacity:1}
+
+/* Left gradient — blends left side into a dark warm "canvas" for product */
+#left-fade{
+  position:fixed;top:0;left:0;width:58%;height:100vh;z-index:4;
+  pointer-events:none;
+  background:linear-gradient(to right,
+    #14110d 0%,
+    #1a1612 35%,
+    rgba(22,18,14,0.6) 70%,
+    rgba(22,18,14,0) 100%);
+}
 
 /* Vignettes */
 #vig-radial{
@@ -125,19 +134,25 @@ html,body{
 .copy-block{
   position:absolute;
   top:0;left:0;
-  width:100%;height:100%;
+  width:60%;height:100%;
   display:flex;
   flex-direction:column;
   justify-content:flex-end;
-  padding:0 8vw 4.5vh;
+  align-items:flex-start;
+  text-align:left;
+  padding:0 6vw 5vh;
   opacity:0;
   transition:opacity 0.55s ease;
 }
 .copy-block.vis{opacity:1}
 
+/* Intro & outro span full width (centered brand displays) */
+#c-intro, #c-outro{width:100%;align-items:center;text-align:center}
+
 .lay-center{justify-content:center;align-items:center;text-align:center}
 .lay-right{align-items:flex-end;text-align:right}
 .lay-bottom-center{justify-content:flex-end;align-items:center;text-align:center}
+.lay-bottom-left{justify-content:flex-end;align-items:flex-start;text-align:left}
 
 /* Typography */
 .eyebrow{
@@ -240,7 +255,7 @@ html,body{
   padding:0.38em 0.95em;font-weight:500;
 }
 
-/* Product boxes — center stage, video is ambient backdrop */
+/* Product boxes — left side, video lives on the right */
 #product-layer{
   position:fixed;
   top:0;left:0;
@@ -251,31 +266,31 @@ html,body{
 #product-layer::before{
   content:'';
   position:absolute;
-  top:42%;left:50%;
-  width:56vw;height:56vw;
-  max-width:680px;max-height:680px;
+  top:46%;left:24%;
+  width:42vw;height:42vw;
+  max-width:520px;max-height:520px;
   transform:translate(-50%,-50%);
-  background:radial-gradient(circle, rgba(212,98,42,0.16) 0%, rgba(212,98,42,0.05) 35%, transparent 65%);
+  background:radial-gradient(circle, rgba(212,98,42,0.18) 0%, rgba(212,98,42,0.05) 35%, transparent 65%);
   pointer-events:none;
   z-index:-1;
 }
 .product-box{
   position:absolute;
-  top:42%;left:50%;
-  width:min(38vw, 440px);
+  top:46%;left:24%;
+  width:min(28vw, 340px);
   transform:translate(-50%,-50%);
   opacity:0;
   transition:opacity 0.55s ease;
   pointer-events:auto;
 }
 .product-box.pos-left,
-.product-box.pos-right{left:50%;right:auto}
+.product-box.pos-right{left:24%;right:auto}
 .product-box.vis{opacity:1}
 .product-box.vis .product-thumb{transform:scale(1);box-shadow:
-  0 36px 90px rgba(0,0,0,0.65),
-  0 14px 36px rgba(0,0,0,0.45),
+  0 36px 90px rgba(0,0,0,0.7),
+  0 14px 36px rgba(0,0,0,0.5),
   0 0 0 1px rgba(245,240,232,0.14),
-  0 0 120px rgba(212,98,42,0.18);
+  0 0 120px rgba(212,98,42,0.2);
 }
 .product-thumb{
   width:100%;aspect-ratio:1/1;
@@ -326,12 +341,19 @@ html,body{
 
 /* Mobile */
 @media(max-width:768px){
-  /* Video as ambient backdrop on mobile too — keep cover + blur */
-  .vid-layer video{object-fit:cover;filter:blur(18px) brightness(0.5) saturate(0.85);transform:scale(1.1)}
+  /* Mobile: full-screen video with bottom fade, no left split */
+  .vid-layer video{object-fit:cover}
+  #left-fade{
+    width:100%;height:55vh;
+    background:linear-gradient(to top,
+      rgba(0,0,0,0.7) 0%,
+      rgba(0,0,0,0.25) 60%,
+      transparent 100%);
+  }
   #nav{padding:1.1rem 1.2rem}
   .nav-logo{font-size:1.3rem}
   .nav-links{display:none}
-  .copy-block{padding:0 6vw 3.5vh}
+  .copy-block{width:100%;padding:0 6vw 3.5vh}
   .lay-right{align-items:flex-start;text-align:left}
   .lay-right .ch-title{max-width:100%}
   .big-title{font-size:clamp(2.8rem,14vw,5rem);line-height:0.92}
@@ -354,6 +376,11 @@ html,body{
   }
   .product-box.pos-left,
   .product-box.pos-right{left:50%;right:auto}
+  #product-layer::before{
+    top:44%;left:50%;
+    width:80vw;height:80vw;max-width:380px;max-height:380px;
+    transform:translate(-50%,-50%);
+  }
   .product-label{font-size:0.72rem;letter-spacing:0.14em;bottom:0.9rem}
   .cta-row{margin-top:1.8rem;gap:0.7rem}
   .btn-fill,.btn-line{padding:0.8em 1.6em;font-size:0.72rem;letter-spacing:0.1em}
@@ -442,6 +469,7 @@ html,body{
   </div>
 </nav>
 
+<div id="left-fade"></div>
 <div id="vig-radial"></div>
 <div id="vig-bottom"></div>
 <div id="vig-top"></div>
@@ -508,7 +536,7 @@ html,body{
 <!-- COPY LAYER -->
 <div id="copy-layer">
 
-  <div class="copy-block vis" id="c-intro">
+  <div class="copy-block lay-center vis" id="c-intro">
     <div class="eyebrow">每一只，都值得被记住</div>
     <div class="big-title">pawooo<span class="acc">*</span></div>
     <p class="sub intro-sub">不只是宠物品牌。是一种对生命温度的执念，对每一个爪印的珍视。</p>
@@ -530,7 +558,7 @@ html,body{
     <p class="sub">它推倒你的咖啡，咬坏你的鞋，又用一个大大的拥抱告诉你——这一切，都值得。</p>
   </div>
 
-  <div class="copy-block lay-bottom-center" id="c-ch3">
+  <div class="copy-block lay-bottom-left" id="c-ch3">
     <div class="quote-block">
       <span class="q-mark">"</span>
       <p class="q-text">它不会说话，<br>却把所有的话<br>都藏在眼睛里。</p>
