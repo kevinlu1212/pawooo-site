@@ -243,27 +243,34 @@ html,body{
 .product-box{
   position:absolute;
   top:50%;
-  width:200px;
+  width:300px;
   transform:translateY(-50%);
   opacity:0;
-  transition:opacity 0.5s ease;
+  transition:opacity 0.5s ease, transform 0.5s ease;
   pointer-events:auto;
 }
-.product-box.pos-left{left:5%}
-.product-box.pos-right{right:12%}
+.product-box.pos-left{left:4%}
+.product-box.pos-right{right:8%}
 .product-box.vis{opacity:1}
+.product-box.vis .product-thumb{transform:scale(1);box-shadow:0 16px 56px rgba(0,0,0,0.55), 0 0 0 1px rgba(245,240,232,0.08)}
 .product-thumb{
   width:100%;aspect-ratio:1/1;
-  border-radius:12px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  border-radius:18px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.35);
   overflow:hidden;
   position:relative;
+  transform:scale(0.92);
+  transition:transform 0.5s cubic-bezier(0.2,0.7,0.2,1), box-shadow 0.5s ease;
+}
+.product-thumb:hover{
+  transform:scale(1.04);
+  box-shadow:0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,98,42,0.5);
 }
 .product-thumb::after{
   content:'';
   position:absolute;
   inset:0;
-  background: radial-gradient(circle at 30% 28%, rgba(255,255,255,0.18), transparent 55%);
+  background: radial-gradient(circle at 30% 28%, rgba(255,255,255,0.22), transparent 55%);
   pointer-events:none;
   z-index:2;
 }
@@ -281,9 +288,10 @@ html,body{
 .thumb-5{background:linear-gradient(135deg,#B89070 0%,#4A2D1A 100%)}
 .thumb-6{background:linear-gradient(135deg,#5A7D8C 0%,#162A36 100%)}
 .product-label{
-  font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;
-  color:var(--cream);margin-top:0.7rem;text-align:center;
-  opacity:0.9;font-weight:500;
+  font-size:0.82rem;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--cream);margin-top:0.9rem;text-align:center;
+  opacity:0.95;font-weight:500;
+  text-shadow:0 2px 8px rgba(0,0,0,0.6);
 }
 
 /* Mobile */
